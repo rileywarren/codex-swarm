@@ -1,0 +1,38 @@
+swarm:
+  max_workers: 4
+  supervisor_model: "o3"
+  worker_model: "o4-mini"
+  worker_timeout: 300
+  supervisor_timeout: 600
+  approval_mode: "on-request"
+  codex_binary: "codex"
+  pipeline_continue_on_error: false
+
+budget:
+  max_total_cost: 5.0
+  max_worker_cost: 1.5
+  max_total_tokens: 200000
+  warn_at_percent: 80
+
+worktree:
+  base_dir: "/tmp/codex-swarm"
+  cleanup: true
+  auto_merge: true
+  merge_strategy: "no-ff"
+
+results:
+  max_summary_tokens: 500
+  include_diff: false
+  max_diff_lines: 200
+  response_file: ".codex-swarm-response.md"
+
+ipc:
+  method: "unix_socket"
+  socket_path: "/tmp/codex-swarm.sock"
+  message_terminator: "\n---MSG_END---\n"
+
+tui:
+  enabled: true
+  refresh_rate: 0.5
+  show_worker_output: false
+  interactive_controls: true
