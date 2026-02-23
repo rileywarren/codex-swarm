@@ -300,6 +300,7 @@ class SwarmMainWindow(QMainWindow):
             session_id=session_id,
             history=self.history,
         )
+        controller.start_event_consumer()
         panel = SessionPanel(controller)
         self._controllers[session_id] = controller
         self._panels[session_id] = panel

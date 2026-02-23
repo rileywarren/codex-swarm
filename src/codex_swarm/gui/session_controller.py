@@ -43,7 +43,7 @@ class SessionController(QObject):
         self._run_id: str | None = None
         self._run_budget: dict[str, tuple[float, int]] = {}
         self._orchestrator_started = False
-        self._event_consumer = asyncio.create_task(self._consume_events())
+        self._event_consumer: asyncio.Task[Any] | None = None
         self.queue_paused = False
 
     @staticmethod
@@ -56,6 +56,12 @@ class SessionController(QObject):
     @property
     def active(self) -> bool:
         return self._active
+
+    def start_event_consumer(self) -> None:
+        if self._event_consumer is not None and not self._event_consumer.done():
+            return
+        loop = asyncio.get_event_loop()
+        self._event_consumer = loop.create_task(self._consume_events())
 
     async def ensure_started(self) -> None:
         if self._orchestrator_started:
@@ -285,9 +291,10 @@ class SessionController(QObject):
             await self.orchestrator.stop()
             self._orchestrator_started = False
 
-        self._event_consumer.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await self._event_consumer
+        if self._event_consumer is not None:
+            self._event_consumer.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._event_consumer
 
     async def _consume_events(self) -> None:
         try:
