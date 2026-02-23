@@ -10,6 +10,7 @@ import yaml
 
 from .config import load_config
 from .logging import configure_logging
+from .model_catalog import list_available_models, read_codex_default_model, save_codex_swarm_default_models
 from .models import DispatchRequest, SpawnAgentPayload, Strategy
 from .orchestrator import Orchestrator
 from .patch_guide import generate_patch_guide
@@ -185,6 +186,9 @@ def _format_results(results: list[Any]) -> str:
 
 async def _run_with_tui(orchestrator: Orchestrator, task: str) -> None:
     queue = orchestrator.subscribe()
+    model_descriptors = list_available_models()
+    available_models = [item.slug for item in model_descriptors]
+    current_model = orchestrator.config.swarm.supervisor_model or read_codex_default_model()
 
     async def action_handler(action: str, payload: dict) -> None:
         if action == "merge_results":
@@ -200,7 +204,20 @@ async def _run_with_tui(orchestrator: Orchestrator, task: str) -> None:
         elif action == "kill_supervisor":
             await orchestrator.kill_supervisor()
 
-    app = SwarmTUIApp(queue, action_handler=action_handler, budget_cap=orchestrator.config.budget.max_total_cost)
+    async def model_default_handler(model_slug: str) -> str:
+        saved_path = save_codex_swarm_default_models(model_slug, model_slug)
+        orchestrator.config.swarm.supervisor_model = model_slug
+        orchestrator.config.swarm.worker_model = model_slug
+        return str(saved_path)
+
+    app = SwarmTUIApp(
+        queue,
+        action_handler=action_handler,
+        budget_cap=orchestrator.config.budget.max_total_cost,
+        available_models=available_models,
+        current_model=current_model,
+        model_default_handler=model_default_handler,
+    )
 
     supervisor_task = asyncio.create_task(orchestrator.run_supervisor(task))
     tui_task = asyncio.create_task(app.run_async())

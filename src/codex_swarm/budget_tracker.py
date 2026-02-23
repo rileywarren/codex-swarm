@@ -25,12 +25,15 @@ class BudgetTracker:
         output_tokens = max(1, len(text) // 4)
         return TokenUsage(input_tokens=0, cached_input_tokens=0, output_tokens=output_tokens)
 
-    def estimate_cost(self, model: str, usage: TokenUsage) -> float:
-        input_price, output_price = MODEL_PRICE_PER_1K.get(model, (0.004, 0.012))
+    def estimate_cost(self, model: str | None, usage: TokenUsage) -> float:
+        if model is None:
+            input_price, output_price = (0.004, 0.012)
+        else:
+            input_price, output_price = MODEL_PRICE_PER_1K.get(model, (0.004, 0.012))
         billable_input = max(0, usage.input_tokens - usage.cached_input_tokens)
         return (billable_input / 1000.0) * input_price + (usage.output_tokens / 1000.0) * output_price
 
-    def add_usage(self, usage: TokenUsage, model: str, worker_id: str | None = None) -> BudgetSnapshot:
+    def add_usage(self, usage: TokenUsage, model: str | None, worker_id: str | None = None) -> BudgetSnapshot:
         cost = self.estimate_cost(model, usage)
 
         self.total_input_tokens += usage.input_tokens

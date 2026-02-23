@@ -20,6 +20,15 @@ uv sync
 codex-swarm run "Refactor authentication flow with tests"
 ```
 
+In TUI mode, press `d` to open the model picker.  
+Selected defaults are saved to `~/.codex-swarm/config.yaml` and applied on future runs.
+
+If you installed `codex-swarm` as a global uv tool, refresh after updates:
+
+```bash
+uv tool install --reinstall --from /Users/rileywarren/Projects/codex-swarm codex-swarm
+```
+
 Headless examples:
 
 ```bash
@@ -47,6 +56,7 @@ codex-swarm patch --output docs/patch-guide.md
 - Worker timeout kill with partial diff capture.
 - Merge conflicts auto-abort and report back.
 - Out-of-scope file edits require explicit supervisor approval (`merge_results`).
+- Supervisor dispatch parser is tolerant of common `spawn_swarm` shape variations (for example `workers` vs `tasks`) and skips invalid blocks without crashing the session.
 
 ## Project Structure
 

@@ -5,6 +5,7 @@ from typing import Any
 
 import yaml
 
+from .model_catalog import load_codex_swarm_user_defaults
 from .models import AppConfig
 
 
@@ -48,6 +49,9 @@ def load_config(
     cli_overrides: dict[str, Any] | None = None,
 ) -> AppConfig:
     base = _load_yaml(_default_config_path())
+    user_defaults = load_codex_swarm_user_defaults()
+    if user_defaults:
+        base = _deep_merge(base, user_defaults)
     if config_path:
         base = _deep_merge(base, _load_yaml(config_path))
 

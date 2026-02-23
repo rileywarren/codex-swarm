@@ -102,12 +102,10 @@ class WorkerManager:
                 self.config.swarm.approval_mode,
                 "exec",
                 "--json",
-                "-m",
-                self.config.swarm.worker_model,
-                "--cd",
-                str(info.path),
-                prompt,
             ]
+            if self.config.swarm.worker_model:
+                cmd.extend(["-m", self.config.swarm.worker_model])
+            cmd.extend(["--cd", str(info.path), prompt])
 
             process = await asyncio.create_subprocess_exec(
                 *cmd,

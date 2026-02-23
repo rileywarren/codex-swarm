@@ -49,8 +49,8 @@ class SwarmConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     max_workers: int = 4
-    supervisor_model: str = "o3"
-    worker_model: str = "o4-mini"
+    supervisor_model: str | None = None
+    worker_model: str | None = None
     worker_timeout: int = 300
     supervisor_timeout: int = 600
     approval_mode: str = "on-request"

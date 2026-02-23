@@ -1,7 +1,7 @@
 swarm:
   max_workers: 4
-  supervisor_model: "o3"
-  worker_model: "o4-mini"
+  supervisor_model: null
+  worker_model: null
   worker_timeout: 300
   supervisor_timeout: 600
   approval_mode: "on-request"

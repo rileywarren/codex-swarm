@@ -34,12 +34,10 @@ class SupervisorManager:
             self.config.swarm.approval_mode,
             "exec",
             "--json",
-            "-m",
-            self.config.swarm.supervisor_model,
-            "--cd",
-            str(self.repo_path),
-            prompt,
         ]
+        if self.config.swarm.supervisor_model:
+            cmd.extend(["-m", self.config.swarm.supervisor_model])
+        cmd.extend(["--cd", str(self.repo_path), prompt])
 
         process = await asyncio.create_subprocess_exec(
             *cmd,
@@ -75,8 +73,17 @@ class SupervisorManager:
                 if not message:
                     continue
 
-                for req in parse_dispatch_blocks(message):
-                    await dispatch_handler(req)
+                try:
+                    requests = parse_dispatch_blocks(message)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("Failed to parse dispatch blocks: %s", exc)
+                    continue
+
+                for req in requests:
+                    try:
+                        await dispatch_handler(req)
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning("Dispatch handler failed for %s: %s", req.tool, exc)
 
         async def read_stderr() -> None:
             assert process.stderr is not None
