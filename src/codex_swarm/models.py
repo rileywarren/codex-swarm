@@ -102,6 +102,15 @@ class TUIConfig(BaseModel):
     interactive_controls: bool = True
 
 
+class GUIConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    history_db_path: str = "~/.codex-swarm/history.db"
+    history_max_runs: int = 200
+    max_concurrent_sessions: int = 6
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -111,6 +120,7 @@ class AppConfig(BaseModel):
     results: ResultsConfig = Field(default_factory=ResultsConfig)
     ipc: IPCConfig = Field(default_factory=IPCConfig)
     tui: TUIConfig = Field(default_factory=TUIConfig)
+    gui: GUIConfig = Field(default_factory=GUIConfig)
 
 
 class SpawnAgentPayload(BaseModel):

@@ -85,6 +85,18 @@ def run(runtime: RuntimeContext, task: str) -> None:
     asyncio.run(_run())
 
 
+@main.command()
+@click.pass_obj
+def gui(runtime: RuntimeContext) -> None:
+    """Launch the desktop GUI."""
+    if not runtime.config.gui.enabled:
+        raise click.ClickException("GUI is disabled by configuration")
+
+    from .gui.app import run_gui
+
+    run_gui(runtime)
+
+
 @main.command("fan-out")
 @click.option("--tasks", "tasks_path", required=True, type=click.Path(path_type=Path, dir_okay=False, exists=True))
 @click.pass_obj

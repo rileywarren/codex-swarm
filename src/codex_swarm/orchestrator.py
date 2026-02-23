@@ -18,6 +18,7 @@ from .models import (
     DispatchRequest,
     IPCMessage,
     MergeResultsPayload,
+    MergeOutcome,
     ReturnFormat,
     RuntimeEvent,
     SpawnAgentPayload,
@@ -35,6 +36,8 @@ from .worker_manager import WorkerManager
 from .worktree_manager import WorktreeManager
 
 logger = get_logger(__name__)
+
+_MERGE_LOCK = asyncio.Lock()
 
 
 class Orchestrator:
@@ -220,7 +223,11 @@ class Orchestrator:
                 )
             return {"merged": False, "reason": result.status.value, "worker_id": result.worker_id}
 
-        outcome = self.merge_manager.merge_branch(result.worker_id, result.branch, result.task.task)
+        outcome = await self._merge_worker_branch(
+            worker_id=result.worker_id,
+            branch=result.branch,
+            task_summary=result.task.task,
+        )
         self.worker_states[result.worker_id]["status"] = "merged" if outcome.merged else "merge_conflict"
         self.worker_states[result.worker_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
         await self._emit("worker.merged", outcome.model_dump())
@@ -253,7 +260,7 @@ class Orchestrator:
                 outcomes.append({"worker_id": worker_id, "merged": False, "error": "unknown worker"})
                 continue
 
-            outcome = self.merge_manager.merge_branch(
+            outcome = await self._merge_worker_branch(
                 worker_id=worker_id,
                 branch=result.branch,
                 task_summary=result.task.task,
@@ -312,6 +319,22 @@ class Orchestrator:
             "pending_approval": sorted(self.pending_approval),
             "budget": self.budget_tracker.snapshot().model_dump(),
         }
+
+    async def _merge_worker_branch(
+        self,
+        worker_id: str,
+        branch: str,
+        task_summary: str,
+        resolve_conflicts: str = "abort",
+    ) -> MergeOutcome:
+        async with _MERGE_LOCK:
+            return await asyncio.to_thread(
+                self.merge_manager.merge_branch,
+                worker_id=worker_id,
+                branch=branch,
+                task_summary=task_summary,
+                resolve_conflicts=resolve_conflicts,
+            )
 
     async def _handle_ipc_message(self, message: IPCMessage) -> dict[str, Any] | IPCMessage | None:
         if message.type in {"spawn_agent", "spawn_swarm", "check_workers", "merge_results"}:

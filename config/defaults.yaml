@@ -36,3 +36,9 @@ tui:
   refresh_rate: 0.5
   show_worker_output: false
   interactive_controls: true
+
+gui:
+  enabled: true
+  history_db_path: "~/.codex-swarm/history.db"
+  history_max_runs: 200
+  max_concurrent_sessions: 6
